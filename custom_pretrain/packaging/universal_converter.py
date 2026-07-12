@@ -162,7 +162,11 @@ def convert_dataset(dataset_name, cache_output_dir, embeddings_dir, output_dir):
     
     # Immediate reload validation
     print("Verifying saved file by reloading...")
-    reloaded_list = torch.load(output_path, map_location="cpu")
+    reloaded_list = torch.load(
+        output_path,
+        map_location="cpu",
+        weights_only=False,
+    )   
     if not isinstance(reloaded_list, list) or len(reloaded_list) == 0:
         raise ValueError("CRITICAL: Saved file does not load as a non-empty python list!")
         

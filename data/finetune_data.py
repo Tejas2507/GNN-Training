@@ -12,7 +12,7 @@ from torch_geometric.utils import is_undirected
 
 from utils.utils import idx2mask
 
-citation_datasets = ['arxiv', 'cora', 'citeseer', 'pubmed', 'arxiv23', 'dblp']
+citation_datasets = ['arxiv', 'cora', 'citeseer', 'pubmed', 'arxiv23', 'dblp', 'BUPT', 'Elliptic', 'IBM_AML']
 ecommerce_datasets = ['bookhis', 'bookchild', 'elecomp', 'elephoto', 'sportsfit', 'amazonratings', 'products']
 molecule_datasets = ['chemblpre', 'chempcba', 'chemhiv', 'bbbp', 'bace', 'toxcast', 'cyp450', 'tox21', 'muv']
 kg_datasets = ['WN18RR', 'FB15K237', 'codex_s', 'codex_m', 'codex_l', 'NELL995', 'GDELT', 'ICEWS1819']
@@ -64,7 +64,7 @@ def single_graph(params):
 
     path = osp.join(data_dir, dataset_name, 'processed', 'geometric_data_processed.pt')
 
-    data = torch.load(path)[0]
+    data = torch.load(path, weights_only=False)[0]
     data = ToUndirected()(data)
     data.name = dataset_name
 

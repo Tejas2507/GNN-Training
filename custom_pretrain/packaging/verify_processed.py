@@ -23,7 +23,7 @@ def verify_dataset(dataset_name, output_dir):
         raise FileNotFoundError(f"Processed dataset file not found at: {pt_path}")
         
     # Step 1: Load exactly like GIT loads it
-    loaded_list = torch.load(pt_path, map_location="cpu")
+    loaded_list = torch.load(pt_path, map_location="cpu", weights_only=False)
     if not isinstance(loaded_list, list) or len(loaded_list) == 0:
         raise ValueError(f"FAIL: Loaded object from {pt_path} is not a non-empty python list!")
         
