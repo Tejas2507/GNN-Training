@@ -59,6 +59,10 @@ pretrain_datasets = {
                       'elephoto', 'sportsfit', 'amazonratings', 'products', 'chemblpre', 'chempcba', 'chemhiv', 'bbbp',
                       'bace', 'toxcast', 'cyp450', 'tox21', 'muv', 'WN18RR', 'FB15K237', 'codex_s', 'codex_m',
                       'codex_l', 'NELL995', 'GDELT', 'ICEWS1819', 'Enron', 'Googlemap_CT'],
+    'fraud': ['BUPT', 'Elliptic', 'IBM_AML'],
+    'BUPT': ['BUPT'],
+    'Elliptic': ['Elliptic'],
+    'IBM_AML': ['IBM_AML'],
 }
 domain2task = {
     'citation': 'node',
