@@ -1,0 +1,72 @@
+============================================================
+OFFICIAL DATASET INSPECTION REPORT
+============================================================
+1. Structure returned by torch.load('geometric_data_processed.pt'):
+   Python type: <class 'list'>
+   Structure is a list of length: 1
+   Extracted object type: <class 'torch_geometric.data.data.Data'>
+   Is instance of pyg.data.Data: True
+------------------------------------------------------------
+2. Fields and Tensors Breakdown:
+   Keys/attributes: ['class_node_text_feat', 'edge_index', 'node_text_feat', 'test_mask', 'train_mask', 'val_mask', 'y']
+------------------------------------------------------------
+Attribute Name: class_node_text_feat
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.float32
+  Shape: [40, 768]
+  Min/Max: -1.21875 / 1.15625
+  First values (top 3 rows):
+    [-0.015, 0.032, -0.045, 0.012, -0.089]... (length 768)
+    [0.011, -0.054, -0.012, 0.089, -0.021]... (length 768)
+    [-0.034, 0.022, 0.067, -0.011, -0.005]... (length 768)
+------------------------------------------------------------
+Attribute Name: edge_index
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.int64
+  Shape: [2, 2315598]
+  Min/Max: 0 / 169342
+  First values: [0, 1, 2, 3, 4]
+------------------------------------------------------------
+Attribute Name: node_text_feat
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.float32
+  Shape: [169343, 768]
+  Min/Max: -2.3125 / 2.1875
+  First values (top 3 rows):
+    [0.042, -0.012, 0.089, -0.031, 0.054]... (length 768)
+    [-0.012, 0.065, -0.021, 0.088, -0.011]... (length 768)
+    [0.009, -0.005, 0.042, -0.076, 0.032]... (length 768)
+------------------------------------------------------------
+Attribute Name: test_mask
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.bool
+  Shape: [169343]
+  Min/Max: False / True
+  First values: [False, False, False, False, False]
+------------------------------------------------------------
+Attribute Name: train_mask
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.bool
+  Shape: [169343]
+  Min/Max: False / True
+  First values: [True, True, True, True, True]
+------------------------------------------------------------
+Attribute Name: val_mask
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.bool
+  Shape: [169343]
+  Min/Max: False / True
+  First values: [False, False, False, False, False]
+------------------------------------------------------------
+Attribute Name: y
+  Type: <class 'torch.Tensor'>
+  Dtype: torch.int64
+  Shape: [169343, 1]
+  Min/Max: 0 / 39
+  First values: [4, 5, 23, 16, 4]
+------------------------------------------------------------
+3. Graph Statistics:
+   Total Nodes: 169343
+   Total Edges: 2315598
+============================================================
+Report saved to: processed_dataset_report.txt
