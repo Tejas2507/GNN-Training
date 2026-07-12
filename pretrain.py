@@ -133,6 +133,8 @@ def run(params):
         print(f"✓ NeighborLoader built in {time.time()-t_loader:.2f} sec")
         print(f"✓ Mini-batches : {len(loader)}")
 
+        epoch_start = time.time()
+
         pretrain(
             model=pretrain_model,
             loader=loader,
@@ -153,7 +155,14 @@ def run(params):
         check_path(save_path)
 
         pretrain_model.save_encoder(osp.join(save_path, f"encoder_{i}.pt"))
-        print(f"Epoch completed in {(time.time()-epoch_start)/60:.2f} min")
+        epoch_time = time.time() - epoch_start
+
+        print("=" * 80)
+        print(f"✓ Epoch {i} completed")
+        print(f"✓ Time      : {epoch_time:.2f} sec ({epoch_time/60:.2f} min)")
+        print(f"✓ Throughput: {len(loader)/epoch_time:.2f} batches/sec")
+        print("=" * 80)
+
         print("Save the model at epoch {}".format(i))
 
     wandb.finish()
