@@ -3,13 +3,15 @@ datasets/
 custom_pretrain/cache_output/
 custom_pretrain/text_cache/
 custom_pretrain/logs/
+custom_pretrain/embeddings/
 checkpoints/
 
-# Serialized models and graphs
+# Serialized models, graphs and arrays
 *.pkl
 *.pt
 *.pth
 *.bin
+*.npy
 
 # Data files
 *.csv
