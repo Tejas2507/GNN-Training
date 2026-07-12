@@ -144,8 +144,11 @@ class MySAGEConv(MessagePassing):
         if self.project and hasattr(self, 'lin'):
             x = (self.lin(x[0]).relu(), x[1])
 
-        # propagate_type: (x: OptPairTensor)
-        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
+        # PyG 2.8 compatibility
+        if edge_attr is None:
+            out = self.propagate(edge_index, x=x)
+        else:
+            out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
         out = self.lin_l(out)
 
         x_r = x[1]
