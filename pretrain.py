@@ -1,11 +1,15 @@
 import os
 import os.path as osp
 import random
+import time
 from copy import deepcopy
 
 import torch
-import torch.nn.functional as F
 import torch.nn as nn
+import torch.nn.functional as F
+
+from tqdm.auto import tqdm
+
 from torch.optim import AdamW
 from torch_geometric.utils import negative_sampling, mask_feature, dropout_adj
 from torch_geometric.loader import NeighborLoader
@@ -26,8 +30,23 @@ def pretrain(model, loader, optimizer, scheduler=None, **kwargs):
     model.train()
     device = get_device_from_model(model)
     params = kwargs['params']
+    epoch = kwargs['epoch']
 
-    for data in loader:
+    pbar = tqdm(
+        loader,
+        total=len(loader),
+        desc=f"Epoch {epoch}/{params['epochs']}",
+        dynamic_ncols=True,
+    )
+
+    print("Waiting for first NeighborLoader batch...")
+
+    epoch_start = time.time()
+
+    for batch_idx, data in enumerate(pbar, 1):
+
+        if batch_idx == 1:
+            print("✓ First batch received")
         bs = data.batch_size
 
         x = data.node_text_feat[data.x].to(device)
@@ -42,13 +61,29 @@ def pretrain(model, loader, optimizer, scheduler=None, **kwargs):
         edge_index2, _ = dropout_adj(edge_index, p=params["edge_p"], force_undirected=True, num_nodes=x.size(0))
         aug_graph2 = [x2, edge_index2]
 
+        fw = time.time()
+
         losses = model(graph, aug_graph1, aug_graph2, bs=bs, params=params)
+
+        fw = time.time() - fw
         loss = losses['loss']
+
+        bw = time.time()
 
         optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
+
+        bw = time.time() - bw
+
+        pbar.set_postfix(
+            batch=f"{batch_idx}/{len(loader)}",
+            loss=f"{loss.item():.4f}",
+            fw=f"{fw:.2f}s",
+            bw=f"{bw:.2f}s",
+            lr=f"{optimizer.param_groups[0]['lr']:.1e}",
+        )
 
         if scheduler:
             scheduler.step()
@@ -88,10 +123,24 @@ def run(params):
     scheduler = get_scheduler(optimizer, params["use_schedular"], params["epochs"])
 
     for i in range(1, params["epochs"] + 1):
-        loader = get_loader(pretrain_data, train_nodes, params)
-        print("Number of mini-batches is {} at epoch {}.".format(len(loader), i))
 
-        pretrain(model=pretrain_model, loader=loader, optimizer=optimizer, scheduler=scheduler, params=params)
+        print("\n" + "="*80)
+        print(f"Epoch {i}/{params['epochs']}")
+        print("="*80)
+
+        t_loader = time.time()
+        loader = get_loader(pretrain_data, train_nodes, params)
+        print(f"✓ NeighborLoader built in {time.time()-t_loader:.2f} sec")
+        print(f"✓ Mini-batches : {len(loader)}")
+
+        pretrain(
+            model=pretrain_model,
+            loader=loader,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            params=params,
+            epoch=i,
+        )
 
         # Save model
         template = "lr_{}_hidden_{}_layer_{}_backbone_{}_fp_{}_ep_{}_alignreg_{}_pt_data_{}"
@@ -104,6 +153,7 @@ def run(params):
         check_path(save_path)
 
         pretrain_model.save_encoder(osp.join(save_path, f"encoder_{i}.pt"))
+        print(f"Epoch completed in {(time.time()-epoch_start)/60:.2f} min")
         print("Save the model at epoch {}".format(i))
 
     wandb.finish()
