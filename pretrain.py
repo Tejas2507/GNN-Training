@@ -1,7 +1,9 @@
+from pathlib import Path
 import os
 import os.path as osp
 import random
 import time
+import csv
 from copy import deepcopy
 
 import torch
@@ -43,6 +45,12 @@ def pretrain(model, loader, optimizer, scheduler=None, **kwargs):
 
     epoch_start = time.time()
 
+    running_loss = 0.0
+    running_feat = 0.0
+    running_topo = 0.0
+    running_sem = 0.0
+    running_align = 0.0
+
     for batch_idx, data in enumerate(pbar, 1):
 
         if batch_idx == 1:
@@ -77,12 +85,18 @@ def pretrain(model, loader, optimizer, scheduler=None, **kwargs):
 
         bw = time.time() - bw
 
+        running_loss += loss.item()
+        running_feat += losses["feat_loss"].item()
+        running_topo += losses["topo_loss"].item()
+        running_sem += losses["sem_loss"].item()
+        running_align += losses["align_reg"].item()
+
         pbar.set_postfix(
             batch=f"{batch_idx}/{len(loader)}",
-            loss=f"{loss.item():.4f}",
-            fw=f"{fw:.2f}s",
-            bw=f"{bw:.2f}s",
-            lr=f"{optimizer.param_groups[0]['lr']:.1e}",
+            loss=f"{running_loss/batch_idx:.4f}",
+            feat=f"{running_feat/batch_idx:.3f}",
+            topo=f"{running_topo/batch_idx:.3f}",
+            sem=f"{running_sem/batch_idx:.3f}",
         )
 
         if scheduler:
@@ -97,6 +111,14 @@ def pretrain(model, loader, optimizer, scheduler=None, **kwargs):
                 "loss/loss": loss.item(),
             }
         )
+
+    return {
+        "loss": running_loss / len(loader),
+        "feat": running_feat / len(loader),
+        "topo": running_topo / len(loader),
+        "sem": running_sem / len(loader),
+        "align": running_align / len(loader),
+    }
 
 
 def run(params):
@@ -135,7 +157,7 @@ def run(params):
 
         epoch_start = time.time()
 
-        pretrain(
+        stats = pretrain(
             model=pretrain_model,
             loader=loader,
             optimizer=optimizer,
@@ -157,11 +179,51 @@ def run(params):
         pretrain_model.save_encoder(osp.join(save_path, f"encoder_{i}.pt"))
         epoch_time = time.time() - epoch_start
 
-        print("=" * 80)
-        print(f"✓ Epoch {i} completed")
-        print(f"✓ Time      : {epoch_time:.2f} sec ({epoch_time/60:.2f} min)")
-        print(f"✓ Throughput: {len(loader)/epoch_time:.2f} batches/sec")
-        print("=" * 80)
+        avg_loss = stats["loss"]
+        avg_feat = stats["feat"]
+        avg_topo = stats["topo"]
+        avg_sem = stats["sem"]
+        avg_align = stats["align"]
+
+        print("\n" + "="*80)
+        print(f"Epoch {i}/{params['epochs']} Summary")
+        print("="*80)
+        print(f"Loss      : {avg_loss:.4f}")
+        print(f"Feature   : {avg_feat:.4f}")
+        print(f"Topology  : {avg_topo:.4f}")
+        print(f"Semantic  : {avg_sem:.4f}")
+        print(f"Align     : {avg_align:.4f}")
+        print(f"Time      : {epoch_time:.2f} sec")
+        print(f"Throughput: {len(loader)/epoch_time:.2f} batches/sec")
+        print("="*80)
+
+        log_file = Path(params['model_path']) / "training_log.csv"
+
+        write_header = not log_file.exists()
+
+        with open(log_file, "a", newline="") as f:
+            writer = csv.writer(f)
+
+            if write_header:
+                writer.writerow([
+                    "epoch",
+                    "loss",
+                    "feat_loss",
+                    "topo_loss",
+                    "sem_loss",
+                    "align_loss",
+                    "time_sec"
+                ])
+
+            writer.writerow([
+                i,
+                avg_loss,
+                avg_feat,
+                avg_topo,
+                avg_sem,
+                avg_align,
+                epoch_time
+            ])
 
         print("Save the model at epoch {}".format(i))
 
