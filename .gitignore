@@ -1,3 +1,28 @@
-/wandb/
-/*.ipynb
-/test*
+# Generated Datasets and Artifacts
+datasets/
+custom_pretrain/cache_output/
+custom_pretrain/text_cache/
+custom_pretrain/logs/
+checkpoints/
+
+# Serialized models and graphs
+*.pkl
+*.pt
+*.pth
+*.bin
+
+# Data files
+*.csv
+*.parquet
+*.zip
+
+# Python/OS caches
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+*.pyc
+*.pyo
+.env
+.venv/
+env/
+venv/

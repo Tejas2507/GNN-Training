@@ -30,6 +30,18 @@ GIT employs a three-stage training paradigm:
 2. **Supervised Fine-Tuning (SFT)**: Domain-specific adaptation with supervised data
 3. **Task Fine-Tuning**: Final adaptation to downstream tasks with minimal data
 
+## 🛡️ Fraud Graph Foundation Model Pretraining
+
+### Goal
+The goal of this preprocessing module is to create a universal, standardized fraud graph representation across multiple heterogeneous fraud domains (including credit card/wire transfers, telecommunication interactions, and blockchain transaction flows) before training the GIT encoder. This bridges the semantic gap between tabular features and structural connections using optimized natural language summaries.
+
+### Supported Pretraining Datasets
+1. **IBM AML**: A credit transfer network mapping unique bank accounts to transaction edges.
+2. **BUPT**: A telecom call record graph mapping phone numbers to communication interactions.
+3. **Elliptic++**: A Bitcoin transaction flow graph mapping unique transaction timesteps and coin flows.
+
+For more technical details on the preprocessing, description generation, and normalization stages, see the [PREPROCESSING.md](file:///Users/tejas/Documents/ET%20hackathon/GIT/PREPROCESSING.md) file.
+
 ## 📦 Installation
 
 ### Requirements
