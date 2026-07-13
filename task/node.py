@@ -103,7 +103,7 @@ def ft_node(model, data, split, optimizer, params):
         return total_loss
 
 
-def eval_node(model, data, split, params):
+def eval_node(model, data, split, params, return_predictions=False):
     model.eval()
     device = get_device_from_model(model)
 
@@ -152,7 +152,11 @@ def eval_node(model, data, split, params):
     val_value = evaluate(y_pred, y, val_mask, params)
     test_value = evaluate(y_pred, y, test_mask, params)
 
-    return {'train': train_value, 'val': val_value, 'test': test_value, 'metric': task2metric[params['task']]}
+    res = {'train': train_value, 'val': val_value, 'test': test_value, 'metric': task2metric[params['task']]}
+    if return_predictions:
+        res["y_true"] = y
+        res["logits"] = y_pred
+    return res
 
 
 def eval_node_few_shot(model, data, split, params):

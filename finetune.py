@@ -165,6 +165,34 @@ def run(params):
 
             if result['val'] > best_val:
                 best_val = result['val']
+                # Save best model checkpoint
+                checkpoint = {
+                    "epoch": epoch,
+                    "best_val": best_val,
+                    "model_state_dict": task_model.state_dict(),
+                    "encoder_state_dict": task_model.encoder.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "params": params
+                }
+                save_dir = osp.join(params['ft_model_path'], params['dataset'])
+                os.makedirs(save_dir, exist_ok=True)
+                torch.save(checkpoint, osp.join(save_dir, "best_model.pt"))
+                print(f"★ New best model saved!  Val = {best_val:.4f}")
+                
+                # Compute predictions using the current model state
+                eval_res = evaluate(model=task_model, data=data, split=split, params=params, return_predictions=True)
+                
+                # Save all evaluation metrics
+                from utils.save_metrics import save_metrics
+                save_metrics(
+                    y_true=eval_res["y_true"],
+                    logits=eval_res["logits"],
+                    test_mask=split["test"],
+                    save_dir=save_dir,
+                    dataset_name=params['dataset'],
+                    epoch=epoch,
+                    best_val=best_val
+                )
 
             print("=" * 90)
             print(
