@@ -66,6 +66,10 @@ def run_evaluation(dataset_name):
     # Ensure dataset name in params matches current run
     ckpt_params["dataset"] = dataset_name
     
+    # Force NeighborLoader evaluation with bs=4096 for target datasets to prevent CUDA OutOfMemoryError
+    if dataset_name in ["BUPT", "IBM_AML", "Elliptic"]:
+        ckpt_params["bs"] = 4096
+    
     # Resolve local data_path fallback if running locally
     local_cache = osp.join(workspace_dir, "cache_data")
     if osp.exists(local_cache):
@@ -130,14 +134,14 @@ def run_evaluation(dataset_name):
                 bs = sg.batch_size
                 x = sg.node_text_feat.to(device)
                 edge_index = sg.edge_index.to(device)
-                y_batch = sg.y[:bs].squeeze().to(device)
+                y_batch = sg.y[:bs].to(device).view(-1)
                 
                 z = model.encode(x, edge_index)[:bs]
                 z = model.pooling_lin(z)
                 logits_batch = model.classify(z)
                 
-                y_true_list.append(y_batch.cpu())
-                logits_list.append(logits_batch.cpu())
+                y_true_list.append(y_batch.detach().cpu())
+                logits_list.append(logits_batch.detach().cpu())
                 
             y_true = torch.cat(y_true_list, dim=0)
             logits = torch.cat(logits_list, dim=0)
