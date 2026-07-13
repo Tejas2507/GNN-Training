@@ -154,8 +154,8 @@ def eval_node(model, data, split, params, return_predictions=False):
 
     res = {'train': train_value, 'val': val_value, 'test': test_value, 'metric': task2metric[params['task']]}
     if return_predictions:
-        res["y_true"] = y
-        res["logits"] = y_pred
+        res["y_true"] = y.detach().cpu()
+        res["logits"] = y_pred.detach().cpu()
     return res
 
 

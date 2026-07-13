@@ -168,7 +168,7 @@ def run(params):
                 # Save best model checkpoint
                 checkpoint = {
                     "epoch": epoch,
-                    "best_val": best_val,
+                    "best_val": float(best_val.item()) if isinstance(best_val, torch.Tensor) else float(best_val),
                     "model_state_dict": task_model.state_dict(),
                     "encoder_state_dict": task_model.encoder.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
@@ -180,7 +180,7 @@ def run(params):
                 print(f"★ New best model saved!  Val = {best_val:.4f}")
                 
                 # Compute predictions using the current model state
-                eval_res = evaluate(model=task_model, data=data, split=split, params=params, return_predictions=True)
+                eval_res = eval_node(model=task_model, data=data, split=split, params=params, return_predictions=True)
                 
                 # Save all evaluation metrics
                 from utils.save_metrics import save_metrics
