@@ -58,7 +58,7 @@ def get_args_sft():
     # Pre-train Parameters
     parser.add_argument("--pretrain_dataset", "--pretrain_data", "--pt_data", type=str, default="default")
     parser.add_argument("--pt_epochs", type=int, default=10)
-    parser.add_argument('--pt_lr', type=float, default=1e-7)
+    parser.add_argument('--pt_lr', type=float, default=5e-5)
     parser.add_argument('--pt_feat_p', type=float, default=0.2)
     parser.add_argument('--pt_edge_p', type=float, default=0.2)
     parser.add_argument('--pt_align_reg_lambda', type=float, default=10.0)
@@ -106,7 +106,7 @@ def get_args_finetune():
     parser.add_argument("--pt_data", "--pretrain_dataset", "--pretrain_data", type=str, default="default")
     parser.add_argument('--train_ratio', type=float, default=1.0)
     parser.add_argument("--pt_epochs", type=int, default=10)
-    parser.add_argument('--pt_lr', type=float, default=1e-7)
+    parser.add_argument('--pt_lr', type=float, default=5e-5)
     parser.add_argument('--pt_feat_p', type=float, default=0.2)
     parser.add_argument('--pt_edge_p', type=float, default=0.2)
     parser.add_argument('--pt_align_reg_lambda', type=float, default=10.0)
