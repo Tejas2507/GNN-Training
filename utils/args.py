@@ -128,7 +128,7 @@ def get_args_finetune():
     # Downstream Parameters
     parser.add_argument("--dataset", "--data", type=str, default="cora")
     parser.add_argument("--task", type=str, choices=["node", "link_pred", "edge", "graph"])
-    parser.add_argument("--repeat", type=int, default=5)
+    parser.add_argument("--repeat", type=int, default=3)
     parser.add_argument("--epochs", type=int, default=1000)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--decay", type=float, default=1e-6)

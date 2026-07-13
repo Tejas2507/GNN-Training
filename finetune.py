@@ -128,6 +128,8 @@ def run(params):
 
     logger = Logger()
 
+    best_val = float('-inf')
+
     print(f"✓ Number of splits: {len(splits)}")
 
     for idx, split in enumerate(splits):
@@ -150,7 +152,7 @@ def run(params):
         optimizer = AdamW(task_model.parameters(), lr=params["lr"], weight_decay=params["decay"])
         stopper = EarlyStopping(patience=params["early_stop"])
 
-        best_val = -1
+
 
         for epoch in range(1, params["epochs"] + 1):
             epoch_start = time.time()
