@@ -30,6 +30,7 @@ from task.graph import ft_graph, eval_graph
 
 import wandb
 import warnings
+import time
 
 warnings.filterwarnings("ignore")
 
@@ -120,12 +121,17 @@ def run(params):
         encoder = load_params(encoder, path)
         print("Load the pretrained model from {}".format(path))
 
+    print("✓ Creating TaskModel...")
     model = TaskModel(encoder, num_classes=graph.num_classes)
+    print("✓ TaskModel created.")
     model = model.to(device)
 
     logger = Logger()
 
+    print(f"✓ Number of splits: {len(splits)}")
+
     for idx, split in enumerate(splits):
+        print(f"\n========== Split {idx+1}/{len(splits)} ==========")
         seed_everything(idx)
 
         if params["bs"] == 0:
@@ -134,15 +140,46 @@ def run(params):
                 data = split(data)
         else:
             # [train_loader, val_loader, test_loader]
+            print("Building loaders...")
             data = get_loader(graph, split, params)
+            print("✓ Loaders built.")
 
+        print("Copying model...")
         task_model = deepcopy(model)
+        print("✓ Model copied.")
         optimizer = AdamW(task_model.parameters(), lr=params["lr"], weight_decay=params["decay"])
         stopper = EarlyStopping(patience=params["early_stop"])
 
+        best_val = -1
+
         for epoch in range(1, params["epochs"] + 1):
+            epoch_start = time.time()
+            print(f"Epoch {epoch} training...")
             loss = finetune(model=task_model, data=data, split=split, optimizer=optimizer, params=params)
+            print("✓ Training finished.")
+            print("Evaluating...")
             result = evaluate(model=task_model, data=data, split=split, params=params)
+            print("✓ Evaluation finished.")
+
+            epoch_time = time.time() - epoch_start
+
+            if result['val'] > best_val:
+                best_val = result['val']
+
+            print("=" * 90)
+            print(
+                f"Split {idx+1}/{len(splits)} | "
+                f"Epoch {epoch:03d}/{params['epochs']} | "
+                f"Loss: {loss:.4f}"
+            )
+            print(
+                f"Train: {result['train']:.4f} | "
+                f"Val: {result['val']:.4f} | "
+                f"Test: {result['test']:.4f} | "
+                f"Best Val: {best_val:.4f}"
+            )
+            print(f"Epoch Time: {epoch_time:.2f} sec")
+            print("=" * 90)
 
             is_stop = stopper(result)
             logger.log(idx, epoch, loss, result)
