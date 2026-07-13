@@ -289,7 +289,7 @@ def main():
         project="GIT-Finetune",
         name="Data:{} | SFT:{} | PT-Epoch:{}".format(params["dataset"], params["sft_data"], params["pt_epochs"]),
         config=params,
-        mode="disabled" if params["debug"] else "online",
+        mode="disabled",
         group=params['group'],
         tags=tags,
     )
