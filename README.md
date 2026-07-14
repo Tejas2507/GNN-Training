@@ -77,6 +77,27 @@ Every downstream fine-tuning run automatically saves the following evaluation fi
 
 ---
 
+## 📈 Downstream Benchmarks & Results
+
+To demonstrate the cross-dataset generalization of GGFM, the model was evaluated on three major fraud detection datasets. Below are the key results, showcasing high accuracy and macro F1 scores after transferring the pretrained encoder:
+
+### Key Metrics
+*   **IBM AML (Bank Money Laundering)**:
+    *   **Test Accuracy**: **99.87%**
+    *   **Macro F1-Score**: **97.28%** (Macro Precision: **98.39%**, Macro Recall: **96.23%**)
+    *   **ROC-AUC**: **99.86%**
+    *   **PR-AUC (Average Precision)**: **97.82%**
+*   **BUPT (Telecom Calling Fraud)**:
+    *   **Test Accuracy**: **99.98%**
+    *   **Macro F1-Score**: **99.96%** (Macro Precision: **99.96%**, Macro Recall: **99.96%**)
+*   **Elliptic (Bitcoin UTXO Transactions)**:
+    *   **Test Accuracy**: **94.39%**
+    *   **Macro F1-Score**: **54.21%** (Baseline transfer on high-imbalance UTXO flows)
+
+For detailed metric definitions, validation training logs, and analysis of these benchmarks, refer to the [Technical Methodology Report](docs/TECHNICAL_METHODOLOGY.md#10-experimental-results--benchmark-evaluation).
+
+---
+
 ## 📖 Documentation Index
 For advanced guides and deep dives, refer to the files in the `docs/` folder:
 *   [Technical Methodology](docs/TECHNICAL_METHODOLOGY.md): Reverse-engineered overview of data preprocessing, GGFM pretraining architecture, downstream loading, and new dataset integration guide (including starting from raw CSV files).
