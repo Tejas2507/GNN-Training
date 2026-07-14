@@ -79,3 +79,27 @@ For advanced guides and deep dives, refer to the files in the `docs/` folder:
 *   [Fine-Tuning Execution Plan](docs/FINETUNING_EXECUTION_PLAN.md): Detailed call graphs, encoder parameters, checkpoint details, and command execution configurations.
 *   [Preprocessing Pipeline](docs/PREPROCESSING.md): Translating tabular features and topology into semantic descriptions.
 *   [Data Formats](docs/DATA_FORMAT.md): Detailed schemas for PyG Data attributes.
+
+---
+
+## 👥 Credits & Citations
+
+This repository is built upon the **OFA (One for All)** and **GIT (Graph Inductive Training)** foundation model codebase developed by Zehong Wang et al. 
+
+If you use this work, please credit and cite the original authors and their research paper:
+
+```bibtex
+@inproceedings{wang2024one,
+  title={One for All: Towards a Universal Foundation Model for Graphs},
+  author={Wang, Zehong and Shen, Yifei and Zhang, Jiacheng and others},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2024}
+}
+```
+
+### 🛠️ Our Augmentations
+We have augmented the original GFM baseline specifically to support universal fraud detection:
+*   Added custom pipeline scripts to serialize tabular fraud data (`convert_bupt.py`, `convert_ibm.py`, etc.) into GFM-compliant graphs.
+*   Implemented automated in-training downstream evaluation (`utils/save_metrics.py`) exporting precise metrics (Accuracy, Precision, Recall, F1, ROC-AUC, PR-AUC), confusion matrices, and detailed predictions.
+*   Fixed out-of-memory errors by mapping sequentially-ordered evaluation loaders.
+
