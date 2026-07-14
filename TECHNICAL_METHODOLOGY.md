@@ -309,3 +309,73 @@ Follow this step-by-step developer guide to integrate a completely new fraud dat
    ```
 4. Once completed, evaluation reports and checkpoints will automatically be generated in:
    `model/finetune_model/MyFraudData/`
+
+---
+
+## 7. Developer's Guide: Downstream Fine-Tuning Only (Skipping Pretraining)
+
+If you already have a pretrained Graph Foundation Encoder checkpoint (e.g., `encoder_20.pt` generated from joint fraud pretraining) and want to apply it directly to a downstream fraud dataset without running the self-supervised pretraining phase, follow this guide.
+
+### Step 1: Pretrained Encoder Checkpoint Placement
+`finetune.py` resolves the path to the pretrained GNN encoder based on your CLI arguments. You must place your pretrained checkpoint in the constructed subdirectory structure matching the hyperparameters used during its pretraining.
+
+1. Create the expected subdirectory inside your local repository or Kaggle working directory:
+   ```bash
+   mkdir -p model/pretrain_model/lr_5e-05_hidden_768_layer_2_backbone_sage_fp_0.2_ep_0.2_alignreg_10.0_pt_data_fraud
+   ```
+2. Save your pretrained encoder weight file (e.g., `encoder_20.pt` containing the state dict of the `Encoder` layers) inside this folder:
+   ```text
+   model/pretrain_model/lr_5e-05_hidden_768_layer_2_backbone_sage_fp_0.2_ep_0.2_alignreg_10.0_pt_data_fraud/encoder_20.pt
+   ```
+
+### Step 2: Downstream Dataset Preparation
+Place the packaged, processed PyTorch Geometric graph dataset in the `cache_data/` directory:
+1. Ensure the dataset folder name matches the dataset identifier (e.g., `BUPT`, `Elliptic`, `IBM_AML`, or your custom `MyFraudData`).
+2. The file MUST be serialized as a list of length 1 containing the PyG `Data` object, saved at:
+   ```text
+   cache_data/<DATASET_NAME>/processed/geometric_data_processed.pt
+   ```
+3. The `Data` object must contain:
+   * `x`: Node indices tensor of shape `[num_nodes]` (typically `arange(num_nodes)`).
+   * `node_text_feat`: Float tensor of shape `[num_nodes, 768]` containing the sentence transformer node embeddings.
+   * `edge_index`: Long tensor of shape `[2, num_edges]` containing graph topology.
+   * `y`: Labels tensor of shape `[num_nodes]` (`0` = benign, `1` = fraud, `-1` = unlabeled).
+   * `train_mask`, `val_mask`, `test_mask`: Boolean split masks of shape `[num_nodes]`.
+
+### Step 3: Hyperparameter Configuration
+1. Register your dataset and set its learning rates, weight decays, epochs, and normalizations inside `config/base.yaml` under the `node:` section:
+   ```yaml
+     MyFraudData:
+       normalize: "batch"
+       sft_lr: 0.000001
+       sft_epochs: 100
+       lr: 0.0001
+       decay: 0.000001
+   ```
+2. Update dataset domain mappings in `data/finetune_data.py`:
+   - Append your dataset name to `citation_datasets` (which handles node classification tasks).
+
+### Step 4: Run the Fine-Tuning Command
+Run the downstream fine-tuning execution script. Pass the exact pretraining arguments to ensure the loader finds the correct pretrained directory path, and set `--use_params` to pull parameters from the YAML configuration:
+```bash
+python finetune.py \
+  --dataset MyFraudData \
+  --pt_data fraud \
+  --pt_epochs 20 \
+  --pt_lr 5e-5 \
+  --use_params
+```
+
+*   `--pt_data fraud`: Specifies the pretraining dataset name used in the folder naming.
+*   `--pt_epochs 20`: Tells the model loader to look for the file `encoder_20.pt`.
+*   `--pt_lr 5e-5`: Matches the pretraining learning rate folder prefix.
+*   `--use_params`: Instructs the script to load training hyperparameters from `config/base.yaml`.
+
+### Step 5: Check Saved Artifacts
+The training script will run for up to `epochs` (1000) with early stopping on validation performance. Once a new best validation performance is achieved, the script automatically generates evaluation artifacts inside `model/finetune_model/<DATASET_NAME>/`:
+*   `best_model.pt`: The downstream model state dict.
+*   `metrics.json` & `metrics.csv`: Performance reports (Accuracy, Precision, Recall, F1, and ROC-AUC/PR-AUC for binary tasks).
+*   `classification_report.txt`: Tabular view of per-class metrics.
+*   `predictions.csv`: Log of raw probabilities and predictions for each node in the test mask.
+*   `confusion_matrix.png`: Heatmap visual of true positives, false positives, true negatives, and false negatives.
+
