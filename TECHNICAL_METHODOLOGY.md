@@ -252,12 +252,96 @@ All metrics are computed on the test nodes using `scikit-learn`:
 
 Follow this step-by-step developer guide to integrate a completely new fraud dataset (e.g., `MyFraudData`) into this repository.
 
-### Step 1: Preprocessing & Graph Construction
-1. Create a script `custom_pretrain/converters/convert_myfraud.py` to parse your raw data files.
-2. Extract all nodes and edges. Compile structural features (such as degree statistics or transaction details) and add them to each `Node` and `Edge` features dictionary.
-3. Populate Node label values (`0` for benign, `1` for fraudulent, `None` for unlabeled).
-4. Save the resulting graph as a `FraudGraph` pickle object at:
-   `custom_pretrain/cache_output/MyFraudData_graph.pkl`
+### Step 1: Preprocessing & Graph Construction (Starting from Raw CSVs)
+
+If you only have raw CSV files (for example, `nodes.csv` containing accounts/entities with labels and features, and `edges.csv` containing transactions/communications), you can compile them into the universal `FraudGraph` format. 
+
+Create a converter script `custom_pretrain/converters/convert_myfraud.py` using the following implementation structure:
+
+```python
+import os
+import pandas as pd
+import pickle
+from custom_pretrain.schema.graph_schema import Node, Edge, FraudGraph
+
+def load_from_csv(nodes_csv_path, edges_csv_path):
+    # Initialize the empty graph object
+    graph = FraudGraph(name="MyFraudData")
+    
+    # 1. Load Node CSV (contains fields like account_id, label, and attributes)
+    df_nodes = pd.read_csv(nodes_csv_path)
+    print(f"Loaded {len(df_nodes)} nodes from CSV.")
+    
+    # Parse each row into a Node instance
+    for _, row in df_nodes.iterrows():
+        node_id = str(row["account_id"])
+        label = int(row["label"]) if not pd.isna(row["label"]) else None
+        
+        # Collect numerical features into a dictionary
+        features = {
+            "balance": float(row["balance"]),
+            "age_days": float(row["age_days"]),
+        }
+        
+        node = Node(
+            id=node_id,
+            type="bank_account",
+            features=features,
+            text="",
+            label=label
+        )
+        graph.add_node(node)
+        
+    # 2. Load Edge CSV (contains source, destination, and properties)
+    df_edges = pd.read_csv(edges_csv_path)
+    print(f"Loaded {len(df_edges)} edges from CSV.")
+    
+    # Parse each row into an Edge instance
+    for _, row in df_edges.iterrows():
+        src_id = str(row["source_account"])
+        dst_id = str(row["destination_account"])
+        
+        # Verify edge nodes exist in node set, create placeholder if missing
+        if src_id not in graph.nodes:
+            graph.add_node(Node(id=src_id, type="bank_account", features={}, text="", label=None))
+        if dst_id not in graph.nodes:
+            graph.add_node(Node(id=dst_id, type="bank_account", features={}, text="", label=None))
+            
+        edge = Edge(
+            src=src_id,
+            dst=dst_id,
+            edge_type="transaction",
+            weight=float(row.get("amount", 1.0)),
+            timestamp=str(row.get("timestamp", "")),
+            features={}
+        )
+        graph.add_edge(edge)
+        
+    # 3. Compute Degree Properties dynamically
+    in_deg = {nid: 0 for nid in graph.nodes}
+    out_deg = {nid: 0 for nid in graph.nodes}
+    for edge in graph.edges:
+        out_deg[edge.src] += 1
+        in_deg[edge.dst] += 1
+        
+    for nid, node in graph.nodes.items():
+        node.features["in_degree"] = in_deg[nid]
+        node.features["out_degree"] = out_deg[nid]
+        node.features["total_degree"] = in_deg[nid] + out_deg[nid]
+        
+    # Validate structure and save to serialized pickle
+    graph.validate()
+    
+    output_path = "custom_pretrain/cache_output/MyFraudData_graph.pkl"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, "wb") as f:
+        pickle.dump(graph, f)
+        
+    print(f"Successfully serialized FraudGraph to {output_path}")
+
+if __name__ == "__main__":
+    load_from_csv("raw_data/nodes.csv", "raw_data/edges.csv")
+```
 
 ### Step 2: Semantic Text Generation
 1. Open `custom_pretrain/text_generation/node_describer.py`. Add a describer function for your dataset:
