@@ -329,7 +329,7 @@ GGFM makes several research contributions to the field of graph transfer learnin
 
 To enable rapid replication, testing, and evaluation of the GGFM pipeline, all pre-computed assets, text embeddings, serialized graphs, and model checkpoints have been consolidated into a public Kaggle dataset. Skip the expensive BAAI/bge-base-en-v1.5 embedding generation and the self-supervised pretraining loop by directly importing these files:
 
-🔗 **[Kaggle Dataset Replication Page](https://www.kaggle.com/datasets/your-username/your-dataset-name)** *(User: update with your dataset URL)*
+🔗 **[Kaggle Dataset Replication Page](https://www.kaggle.com/datasets/bstejas/ggfm-assets)**
 
 ### Pre-packaged Components
 *   `datasets/` (~1.85 GB): Raw calling record (BUPT), transaction flow (Elliptic), and bank transfer (IBM AML) logs.

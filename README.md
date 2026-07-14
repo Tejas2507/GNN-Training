@@ -111,7 +111,7 @@ For advanced guides and deep dives, refer to the files in the `docs/` folder:
 
 To facilitate rapid replication and testing, we have packaged all pre-computed graph models, language embeddings, raw datasets, and trained checkpoints into a single public Kaggle dataset. This allows researchers and judges to skip the computationally expensive steps (such as encoding millions of node sentences using SentenceTransformers or running full pretraining loops) and immediately run downstream fine-tuning.
 
-🔗 **[Access the Kaggle Replication Dataset here](https://www.kaggle.com/datasets/your-username/your-dataset-name)** *(Please edit this link with your active dataset URL)*
+🔗 **[Access the Kaggle Replication Dataset here](https://www.kaggle.com/datasets/bstejas/ggfm-assets)**
 
 ### Dataset Artifact Structure
 The Kaggle dataset contains the following pre-built components (totalling ~9.5 GB):
