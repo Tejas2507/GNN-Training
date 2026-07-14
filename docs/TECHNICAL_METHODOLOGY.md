@@ -16,6 +16,8 @@ To address these limitations, our objective is **not simply to build another iso
 "Our objective is to pretrain a universal graph encoder capable of transferring structural and semantic fraud knowledge across heterogeneous fraud domains using only a small amount of labeled downstream data."
 ```
 
+![Universal Fraud Foundation Model Impact](../assets/12_universal_fraud_foundation_model_impact.png)
+
 ---
 
 ## 2. Design Philosophy
@@ -51,6 +53,8 @@ Every fraud dataset models different real-world entities:
 
 Instead of defining custom neural architectures for each schema, we introduce a standardized schema (`Node`, `Edge`, `FraudGraph`). Every entity, regardless of its domain, is mapped into these base class definitions. This abstraction ensures that the GNN downstream interface remains constant, facilitating direct transfer learning.
 
+![Universal Graph Standardization](../assets/2_universal_graph_standardization.png)
+
 ### B. Semantic Text Projection & Language Model Alignment
 Traditional transfer learning in GNNs is blocked because numerical feature columns are not aligned. Feature index `17` in the BUPT dataset (e.g., related to network frequency) has nothing to do with feature index `17` in the Elliptic Bitcoin dataset. 
 
@@ -66,33 +70,6 @@ Full-graph message passing requires keeping the entire graph adjacency and featu
 
 ## 3. Universal Data Preprocessing & Graph Compilation
 
-```
-+-------------+
-|   Raw CSV   |
-|  / EdgeList |
-+------+------+
-       | (converters/)
-       v
-+------+------+     +-------------+
-|  FraudGraph | +-->+  Text Cache | (text_generation/)
-|   Pickle    | |   +------+------+
-+------+------+ |          | (SentenceTransformers)
-       |        |          v
-       |        |   +------+------+
-       |        |   | Embeddings  | (node/class/edge.npy)
-       |        |   +------+------+
-       |        |          |
-       v        v          v
-+------+--------+----------+------+
-|     universal_converter.py      |
-+-----------------+---------------+
-                  |
-                  v
-+-----------------+---------------+
-|   geometric_data_processed.pt   |
-+---------------------------------+
-```
-
 ### A. Graph Extraction & Serialization (`custom_pretrain/schema/`)
 Raw dataset elements are structured into a universal object model using a standardized schema. This schema ensures a dataset-agnostic interface for representing nodes, edges, labels, features, and degree configurations.
 *   **`Node`**: Represents a physical entity (e.g., phone number, transaction, bank account). Contains fields: `id` (str), `type` (str), `features` (dict of numerical properties), `text` (str), and `label` (int/None).
@@ -100,21 +77,8 @@ Raw dataset elements are structured into a universal object model using a standa
 *   **`FraudGraph`**: A collection of nodes and edges. It provides methods for adding elements, fetching degrees, checking node existence, and validation.
 
 ### B. Why Graph Standardization?
-```
-Raw Fraud Datasets (BUPT, IBM, Elliptic, MyData)
-                     │
-                     ▼
-       Different Schemas & Column Formats
-                     │
-                     ▼ (Dataset-Specific Converters)
-          Universal FraudGraph Pickle
-                     │
-                     ▼ (universal_converter.py)
-  Same Downstream PyG Data Interface & Dimensions
-                     │
-                     ▼
-         Universal GGFM GNN Encoder
-```
+![Universal Graph Standardization Diagram](../assets/2_universal_graph_standardization.png)
+
 By placing a standardization layer between the raw database tables and the GNN inputs, we decouple the encoder architecture from the dataset schema. The downstream classifier head only interacts with standard PyG fields (`x`, `edge_index`, `node_text_feat`, `class_node_text_feat`, `y`), allowing the pretrained encoder to be swapped into any downstream task without code modifications.
 
 ### C. Dataset-Specific Conversions (`custom_pretrain/converters/`)
@@ -127,26 +91,8 @@ Anonymized numerical features cannot be shared across domains. To establish a un
 *   *IBM AML description*: `"Bank account AC123. Incoming transactions: 5. Outgoing transactions: 2. Total transferred: $10500.00. Account lifetime: 120.4 days."`
 *   *BUPT description*: `"Phone number node. Incoming communications: 12. Outgoing communications: 4. feature_0 = -0.1542. feature_1 = 0.8412."`
 
-```
-                   [Tabular Features]
-            (anonymized, incompatible shapes)
-             /              |             \
-            v               v              v
-       (BUPT Feats)    (IBM Feats)   (Elliptic Feats)
-            |               |              |
-            v               v              v
-     [Text Describer: Maps numbers to descriptive sentences]
-            |               |              |
-            v               v              v
-      "Phone node..."  "Account..."   "Bitcoin tx..."
-             \              |             /
-              v             v            v
-         [Pretrained Language Model Encoder (BGE-1.5)]
-                            |
-                            v
-             [Shared 768-D Semantic Space]
-         (Semantically aligned, uniform dimension)
-```
+![Semantic Alignment with Language Model](../assets/3_semantic_alignment_lm.png)
+
 When these texts are processed by the SentenceTransformer, the language model acts as a semantic bridge. It projects disparate domain statistics into aligned text embedding vectors, enabling the GNN to process different datasets within the same feature space.
 
 ### E. Dense Embedding Generation & Packaging
@@ -167,36 +113,16 @@ When these texts are processed by the SentenceTransformer, the language model ac
     ```
     It is saved inside a list `[data]` at `cache_data/<dataset>/processed/geometric_data_processed.pt`.
 
+![Universal Data Compilation Pipeline](../assets/4_universal_data_compilation_pipeline.png)
+
 ---
 
 ## 4. Self-Supervised Pretraining Pipeline
 
-```
-  Without Pretraining                         With Pretraining
-+-----------------------+               +-----------------------+
-|  Need thousands of    |               |  Learn Graph Topology |
-|  labeled fraud nodes  |               +-----------+-----------+
-+-----------+-----------+                           |
-            |                                       v
-            v                           +-----------------------+
-+-----------------------+               | Learn Semantic Feats  |
-|   Poor Generalization |               +-----------+-----------+
-|   on Unseen Schemas   |                           |
-+-----------------------+                           v
-                                        +-----------------------+
-                                        | Learn General Fraud   |
-                                        | Topologies            |
-                                        +-----------+-----------+
-                                                    |
-                                                    v
-                                        +-----------------------+
-                                        | Fast Downstream       |
-                                        | Low-Label Transfer    |
-                                        +-----------------------+
-```
-
 ### A. Why Self-Supervised Pretraining?
 Training GNNs directly on small downstream datasets leads to overfitting on dataset-specific artifacts (like class ratios or localized ID patterns). Self-supervised pretraining forces the encoder to learn structural properties (such as node degrees, cycle structures, and clustering coefficients) and semantic relations across massive, unlabeled transaction graphs. Consequently, the GNN backbone becomes a general-purpose feature extractor that can be adapted to downstream datasets with minimal labeled data.
+
+![Self-Supervised Pretraining Framework](../assets/5_self_supervised_pretraining_framework.png)
 
 ### B. GNN Encoder Architecture (`model/encoder.py`)
 The backbone encoder is a deep GraphSAGE model:
@@ -205,7 +131,7 @@ The backbone encoder is a deep GraphSAGE model:
     $$\mathbf{h}_i^{(l+1)} = \mathbf{W}_1 \cdot \text{AGGREGATE}\left(\{\mathbf{h}_j^{(l)}, \forall j \in \mathcal{N}(i)\}\right) + \mathbf{W}_2 \cdot \mathbf{h}_i^{(l)}$$
     
     where neighbor features are aggregated using mean pooling, and the target node's own features are integrated via a self-loop transformation.
-*   **Layer Stack**: Convolutions are followed by a non-linear activation (ReLU), Batch Normalization, and Dropout.
+*   **Layer Stack**: Convolutions are followed by a non-linear activation (ReLU), Batch Formation, and Dropout.
 *   **Pooling Layer (`pooling`)**: Aggregates neighbor representations using non-parametric mean pooling followed by a linear projection:
     
     $$\mathbf{z}_i' = \text{Linear}(\text{mean\_pool}(\mathbf{z}_i, \mathcal{N}(i)))$$
@@ -235,6 +161,8 @@ $$\mathcal{L}_{\text{total}} = \lambda_{\text{feat}} \mathcal{L}_{\text{feat}} +
 4.  **Alignment Regularization ($\mathcal{L}_{\text{align}}$)**: Minimizes representation collapse by calculating the KL divergence between the average batch distribution and a uniform target distribution:
     
     $$\mathcal{L}_{\text{align}} = \text{KL}\left(\text{Softmax}(\mathbf{z}_i) \parallel \text{Softmax}(\bar{\mathbf{z}})\right) \cdot \lambda_{\text{align}}$$
+
+![Multi-Task Self-Supervised Loss](../assets/6_multi_task_self_supervised_loss.png)
 
 ### E. Pretraining Optimization & Checkpoints
 Pretraining is run for 20 epochs using the AdamW optimizer (learning rate $5\times 10^{-5}$, weight decay $1\times 10^{-8}$) and a cosine learning rate scheduler. The pretrained encoder checkpoint is saved at `model/pretrain_model/.../encoder_20.pt`.
@@ -268,23 +196,15 @@ For large graphs, full-graph message passing is intractable. The pipeline uses `
 *   **Optimizer & Scheduler**: AdamW (`lr=1e-4`, weight decay `1e-6`) paired with `CosineAnnealingLR` scheduler.
 *   **Early Stopping**: Monitored on validation split Accuracy. Training stops if validation performance does not improve within a patience of `early_stop` (200) epochs.
 
+![Fine-Tuning Pipeline on Target Dataset](../assets/9_fine_tuning_pipeline.png)
+
 ---
 
 ## 6. Why This Pipeline Generalizes
 
 GGFM learns structural fraud behaviors (such as circular transfers or transaction bursts) rather than dataset-specific statistics. Because these structural features are domain-invariant, the pretrained model generalizes effectively to new, unseen networks.
 
-```
-       [Source Fraud Datasets]
-Phone Fraud (BUPT) ----------------\
-Money Laundering (IBM AML) --------+---> [Universal GGFM Encoder]
-Bitcoin Fraud (Elliptic) ----------/              |
-                                                  v (Transfer Weight)
-                                         [Small Indian Dataset]
-                                                  |
-                                                  v (Low-Label Tuning)
-                                         [Downstream Classifier]
-```
+![Cross-Domain Knowledge Transfer](../assets/8_cross_domain_knowledge_transfer.png)
 
 By mapping raw features to natural language descriptions and encoding them into a shared semantic space, we ensure that the input dimensions remain constant across datasets. The GNN can process different schemas without architecture changes, enabling transfer learning across disparate networks.
 
@@ -294,17 +214,7 @@ By mapping raw features to natural language descriptions and encoding them into 
 
 In many real-world applications, labeled fraud data is extremely scarce. This is especially true for cooperative banks, regional institutions, and financial startups, which lack the resources of large multinational banks.
 
-```
-      Traditional Supervised GNNs                     Our GGFM Pipeline
-+---------------------------------------+   +---------------------------------------+
-|  Requires thousands of labeled nodes  |   |  Pretrained on unlabeled graphs       |
-+-------------------+-------------------+   +-------------------+-------------------+
-                    |                                           |
-                    v                                           v
-+---------------------------------------+   +---------------------------------------+
-|  Fails in low-label scenarios         |   |  Adapts with few labeled nodes        |
-+---------------------------------------+   +---------------------------------------+
-```
+![Low-Label Transfer Learning Advantage](../assets/7_low_label_transfer_learning_advantage.png)
 
 Our self-supervised pretraining pipeline addresses this label bottleneck. By pretraining on large unlabeled datasets, the encoder learns robust representations that can be fine-tuned using only a few labeled examples. This enables smaller organizations to build effective fraud detection models without costly labeling campaigns. It provides a practical path to deploying high-accuracy fraud defense systems for:
 *   **Indian Cooperative and Regional Banks**: Which have localized, low-volume customer bases and very few historical records of sophisticated fraud.
@@ -318,75 +228,13 @@ Our self-supervised pretraining pipeline addresses this label bottleneck. By pre
 
 The flowchart below illustrates the complete GGFM pipeline, from raw data preprocessing to downstream deployment:
 
-```
-        [Raw CSV / Edge List]
-                  │
-                  ▼ (convert_myfraud.py)
-          [FraudGraph Pickle]
-                  │
-                  ▼ (node_describer.py)
-         [Node Descriptions JSON]
-                  │
-                  ▼ (multi_gpu_embed.py)
-        [Dense Node Embeddings]
-                  │
-                  ▼ (universal_converter.py)
-         [PyTorch Geometric Data]
-                  │
-                  ▼ (pretrain.py)
-    [Self-Supervised GGFM Pretraining]
-                  │
-                  ▼
-      [Universal Encoder Checkpoint]
-                  │
-                  ▼ (finetune.py)
-        [Downstream Fine-Tuning]
-                  │
-                  ▼
-        [Best Model Checkpoint]
-                  │
-                  ▼ (save_metrics.py)
-     [Automated Evaluation Reports]
-                  │
-                  ▼
-         [Production Deployment]
-```
+![Overall GGFM Pipeline](../assets/1_overall_ggfm_pipeline.png)
 
 ---
 
 ## 9. Checkpoint Selection & Evaluation Metrics Pipeline
 
 The evaluation pipeline is triggered inside the training loop of `finetune.py` whenever validation performance improves:
-
-```
-                  +-----------------------------------------+
-                  |         result['val'] > best_val        |
-                  +--------------------+--------------------+
-                                       |
-                                       v
-                  +--------------------+--------------------+
-                  |    Save model to: best_model.pt         |
-                  +--------------------+--------------------+
-                                       |
-                                       v
-                  +--------------------+--------------------+
-                  |  eval_node(..., return_predictions=True)|
-                  +--------------------+--------------------+
-                                       |
-                                       v
-                  +--------------------+--------------------+
-                  |         utils/save_metrics.py           |
-                  +--------------------+--------------------+
-                                       |
-                                       +
-          +-------+-------+------------+------------+-------+-------+
-          |               |                         |               |
-          v               v                         v               v
-    +-----+------+  +-----+------+            +-----+------+  +-----+------+
-    |metrics.json|  |metrics.csv |            |predictions.  |  |  confusion_|
-    |            |  |            |            |     csv      |  |  matrix.png|
-    +------------+  +------------+            +------------+  +------------+
-```
 
 ### A. Execution Flow
 1.  When validation accuracy improves, the model state is saved to `model/finetune_model/<dataset>/best_model.pt`.
@@ -395,6 +243,8 @@ The evaluation pipeline is triggered inside the training loop of `finetune.py` w
     `eval_res = eval_node(model=task_model, data=data, split=split, params=params, return_predictions=True)`
     
 3.  The outputs are passed to `save_metrics()`, which computes performance metrics on the test split.
+
+![Automatic Checkpoint & Evaluation Pipeline](../assets/10_automatic_checkpoint_evaluation_pipeline.png)
 
 ### B. Metrics Formulation
 Metrics are calculated using `scikit-learn` on the test nodes:
@@ -450,7 +300,7 @@ GGFM makes several research contributions to the field of graph transfer learnin
 *   **Unified Preprocessing Pipeline**: A schema-agnostic graph processing pipeline for heterogeneous networks.
 *   **Transferable Graph Foundation Encoder**: A GNN backbone that transfers structural and semantic knowledge to new domains.
 *   **Semantic Alignment Strategy**: A text-based projection method that maps different features into a shared latent space.
-*   **Reusable Downstream Fine-Tuning Pipeline**: A modular fine-tuning framework that adapts to downstream tasks with minimal labels.
+*   **Reusable Downstream Fine-Tuning Pipeline**: A modular fine-tuning framework that adapts to downstream tasks with limited labels.
 *   **Automatic Evaluation and Checkpoint Generation**: An integrated loop that simplifies training, checkpointing, and evaluation.
 
 ---
@@ -462,6 +312,8 @@ This guide describes how to integrate a new fraud dataset (e.g., `MyFraudData`) 
 ```
 No changes to the encoder architecture are required. The same pretrained representation transfers to unseen fraud datasets.
 ```
+
+![Adding a New Dataset (Easy Integration)](../assets/11_adding_new_dataset.png)
 
 ### Step 1: Preprocessing & Graph Construction (Starting from Raw CSVs)
 If your raw data is in CSV format (e.g., `nodes.csv` and `edges.csv`), you can parse and convert it into the universal `FraudGraph` schema.

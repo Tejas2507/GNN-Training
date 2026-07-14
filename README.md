@@ -2,6 +2,10 @@
 
 GGFM (Graph Foundation Model) is a self-supervised graph neural network framework designed for universal, cross-dataset fraud detection. By combining Graph Inductive Training (GIT) with natural language entity descriptions, GGFM aligns topological transaction networks with dense semantic spaces. This allows the foundation model to generalize across diverse domains (such as telecom fraud, bank account transaction laundering, and Bitcoin illicit laundering) with minimal downstream fine-tuning.
 
+![GGFM Overall Pipeline](assets/1_overall_ggfm_pipeline.png)
+
+![GGFM Fraud Foundation Model Impact](assets/12_universal_fraud_foundation_model_impact.png)
+
 ---
 
 ## 🚀 Key Features
