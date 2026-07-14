@@ -107,6 +107,23 @@ For advanced guides and deep dives, refer to the files in the `docs/` folder:
 
 ---
 
+## 📦 Kaggle Replication Dataset
+
+To facilitate rapid replication and testing, we have packaged all pre-computed graph models, language embeddings, raw datasets, and trained checkpoints into a single public Kaggle dataset. This allows researchers and judges to skip the computationally expensive steps (such as encoding millions of node sentences using SentenceTransformers or running full pretraining loops) and immediately run downstream fine-tuning.
+
+🔗 **[Access the Kaggle Replication Dataset here](https://www.kaggle.com/datasets/your-username/your-dataset-name)** *(Please edit this link with your active dataset URL)*
+
+### Dataset Artifact Structure
+The Kaggle dataset contains the following pre-built components (totalling ~9.5 GB):
+*   `datasets/` (~1.85 GB, 11 files): Raw datasets (node lists, features, and transaction edgelists for BUPT, Elliptic, and IBM AML).
+*   `cache_output/` (~2.03 GB, 3 files): Serialized `FraudGraph` schema pickles compiled from raw inputs.
+*   `embeddings/` (~2.61 GB, 9 files): Pre-computed 768-dimensional node and class embeddings generated via `BAAI/bge-base-en-v1.5`.
+*   `cached data/` (~2.70 GB, 3 files): Unified, compiled PyTorch Geometric `geometric_data_processed.pt` files ready for GNN training.
+*   `pretrained model/` (~23.7 MB, 3 files): Pretrained self-supervised universal GGFM encoder checkpoints (`encoder_20.pt`).
+*   `finetuned model/` (~113 MB, 21 files): Pre-trained downstream classification model weights (`best_model.pt`) and evaluation report logs for BUPT, Elliptic, and IBM AML.
+
+---
+
 ## 👥 Credits & Citations
 
 This repository is built upon the **OFA (One for All)** and **GIT (Graph Inductive Training)** foundation model codebase developed by Zehong Wang et al. 

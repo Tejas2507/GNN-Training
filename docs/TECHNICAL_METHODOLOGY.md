@@ -1,4 +1,4 @@
-# GGFM: Graph Foundation Models for Universal Fraud Detection — Research Methodology and Engineering Specifications
+# GGFM: Generalised Graph Foundation Models for Universal Fraud Detection — Research Methodology and Engineering Specifications
 
 ---
 
@@ -325,7 +325,23 @@ GGFM makes several research contributions to the field of graph transfer learnin
 
 ---
 
-## 13. Developer's Dataset Integration Guide
+## 13. Kaggle Replication Artifacts
+
+To enable rapid replication, testing, and evaluation of the GGFM pipeline, all pre-computed assets, text embeddings, serialized graphs, and model checkpoints have been consolidated into a public Kaggle dataset. Skip the expensive BAAI/bge-base-en-v1.5 embedding generation and the self-supervised pretraining loop by directly importing these files:
+
+🔗 **[Kaggle Dataset Replication Page](https://www.kaggle.com/datasets/your-username/your-dataset-name)** *(User: update with your dataset URL)*
+
+### Pre-packaged Components
+*   `datasets/` (~1.85 GB): Raw calling record (BUPT), transaction flow (Elliptic), and bank transfer (IBM AML) logs.
+*   `cache_output/` (~2.03 GB): Compiled domain-agnostic `FraudGraph` schema pickle objects.
+*   `embeddings/` (~2.61 GB): Aligned, 768-dimensional language model embeddings (`node_embeddings.npy`, `class_embeddings.npy`, and `node_ids.json`).
+*   `cached data/` (~2.70 GB): Serialized PyTorch Geometric `geometric_data_processed.pt` dataset objects.
+*   `pretrained model/` (~23.7 MB): Pretrained universal `encoder_20.pt` checkpoint.
+*   `finetuned model/` (~113 MB): Downstream classifier models (`best_model.pt`) and evaluation summaries.
+
+---
+
+## 14. Developer's Dataset Integration Guide
 
 This guide describes how to integrate a new fraud dataset (e.g., `MyFraudData`) into GGFM. 
 
@@ -461,7 +477,7 @@ if __name__ == "__main__":
 
 ---
 
-## 14. Developer's Guide: Downstream Fine-Tuning Only (Skipping Pretraining)
+## 15. Developer's Guide: Downstream Fine-Tuning Only (Skipping Pretraining)
 
 If you have a pretrained GGFM encoder (`encoder_20.pt`) and want to fine-tune it directly on your downstream dataset without pretraining, follow these steps:
 
@@ -491,7 +507,7 @@ python finetune.py \
 
 ---
 
-## 15. Conclusion
+## 16. Conclusion
 
 The primary contribution of this project is **not merely a set of classifiers** for BUPT, IBM AML, or Elliptic. Instead, GGFM produces **a reusable Graph Foundation Model for fraud detection capable of transferring structural and semantic fraud knowledge to unseen graph datasets with limited supervision**.
 
