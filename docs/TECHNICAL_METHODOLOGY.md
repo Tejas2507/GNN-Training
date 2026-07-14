@@ -1,6 +1,6 @@
 # GGFM: Generalised Graph Foundation Models for Universal Fraud Detection — Research Methodology and Engineering Specifications
 
----
+---this 
 
 ## 1. Motivation
 
@@ -179,9 +179,9 @@ Downstream fine-tuning (`finetune.py`) loads the GGFM encoder weights and constr
     
     $$\mathbf{z}_i = \text{Encoder}(\mathbf{x}_i, \mathbf{A})$$
     
-    $$\mathbf{z}_i' = \text{pooling\_lin}(\text{mean\_aggregate}(\mathbf{z}_i))$$
+    $$\mathbf{z}_i' = \text{pooling-lin}(\text{mean-aggregate}(\mathbf{z}_i))$$
     
-    $$\text{logits}_i = \mathbf{W}_{\text{clf}} \cdot \mathbf{z}_i' + \mathbf{b}$$
+    $$\mathbf{logits}_i = \mathbf{W}_{\mathrm{clf}} \cdot \mathbf{z}_i' + \mathbf{b}$$
     
     where $\mathbf{W}_{\text{clf}}$ maps the 768-dimensional representation to the target dataset's class dimension.
 
